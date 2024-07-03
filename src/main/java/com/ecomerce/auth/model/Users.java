@@ -2,7 +2,6 @@ package com.ecomerce.auth.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
