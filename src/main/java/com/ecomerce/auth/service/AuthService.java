@@ -32,8 +32,9 @@ public class AuthService {
         registerDTO.setPassword(passwordEncoder.passwordEncoder().encode(registerDTO.getPassword()));
         registerDTO.setRole(role);
         Users users = authRepository.save(registerDTO.toUser());
-        String token = getToken(users.getEmail());
-        return new ResponseEntity<>(new AuthResponseDTO("User registered successfully", token, token), HttpStatus.OK);
+        String accessToken = getToken(users.getEmail(), "access");
+        String refreshToken = getToken(users.getEmail(),  "refresh");
+        return new ResponseEntity<>(new AuthResponseDTO("User registered successfully", accessToken, refreshToken), HttpStatus.OK);
     }
 
     public ResponseEntity<AuthResponseDTO> login(LoginDTO loginBody) {
@@ -41,13 +42,18 @@ public class AuthService {
                 loginBody.email(), loginBody.password()
         ));
        if(authentication.isAuthenticated()){
-           String token = getToken(loginBody.email());
-           return new ResponseEntity<>(new AuthResponseDTO("Login successful", token, token), HttpStatus.OK);
+           String accessToken = getToken(loginBody.email(),  "access");
+           String refreshToken = getToken(loginBody.email(),  "access");
+           return new ResponseEntity<>(new AuthResponseDTO("Login successful", accessToken, refreshToken), HttpStatus.OK);
        }
        return new ResponseEntity<>(new AuthResponseDTO("Login failed", null, null), HttpStatus.UNAUTHORIZED);
     }
 
-    private String getToken(String users) {
-        return jwtService.generateToken(usersDetailService.loadUserByUsername(users));
+    private String getToken(String email, String type) {
+        return jwtService.generateToken(usersDetailService.loadUserByUsername(email), type);
+    }
+
+    public String refreshToken(String refreshToken) {
+       return jwtService.generateToken(usersDetailService.loadUserByUsername(jwtService.extractEmail(refreshToken)), "refresh");
     }
 }

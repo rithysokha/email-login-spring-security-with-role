@@ -18,14 +18,15 @@ public class JwtService {
 
     private static final String secret ="9B56BC8462BE9A472B8257AB8CD662F3BB57EE33430BE43643A161B0D88CF3813A79926381A00CBD36E75636CDF69C423292A333470BCF67613BBF5123173DE9";
 
-    public String generateToken(UserDetails userDetails){
+    public String generateToken(UserDetails userDetails, String tokenType){
         Map<String, String> claims = new HashMap<>();
         claims.put("role", userDetails.getAuthorities().toString());
+        claims.put("type", tokenType);
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .claims(claims)
                 .issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plusSeconds(3600)))
+                .expiration(Date.from(Instant.now().plusSeconds(tokenType.equals("access") ? 3600 : 3600*24*7)))
                 .signWith(generateKey())
                 .compact();
     }
@@ -47,8 +48,8 @@ public class JwtService {
                 .getPayload();
     }
 
-    public boolean isTokenValid(String jwt) {
+    public boolean isTokenValid(String jwt, String tokenType) {
         Claims claims = getClaims(jwt);
-        return claims.getExpiration().after(Date.from(Instant.now()));
+        return claims.getExpiration().after(Date.from(Instant.now())) && tokenType.equals(claims.get("type"));
     }
 }
